@@ -9,7 +9,7 @@ const Sidebar = () => {
           <Link to="/" className="brand-wrap">
             <img
               src="/images/logo.png"
-              style={{ }}
+              style={{}}
               className="logo"
               alt="Ecommerce dashboard template"
             />
@@ -52,16 +52,6 @@ const Sidebar = () => {
               >
                 <i className="icon fas fa-cart-plus"></i>
                 <span className="text">Add product</span>
-              </NavLink>
-            </li>
-            <li className="menu-item">
-              <NavLink
-                activeClassName="active"
-                className="menu-link"
-                to="/category"
-              >
-                <i className="icon fas fa-list"></i>
-                <span className="text">Categories</span>
               </NavLink>
             </li>
             <li className="menu-item">

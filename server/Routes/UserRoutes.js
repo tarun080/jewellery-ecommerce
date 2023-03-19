@@ -3,6 +3,9 @@ import asyncHandler from "express-async-handler";
 import { protect, admin } from "../Middleware/AuthMiddleware.js";
 import generateToken from "../utils/generateToken.js";
 import User from "./../Models/UserModel.js";
+import Token from "./../Models/Token.js";
+import sendEmail from "../utils/sendEmail.js";
+import crypto from "crypto";
 
 const userRouter = express.Router();
 
@@ -98,7 +101,7 @@ userRouter.put(
 
     if (user) {
       user.name = req.body.name || user.name;
-      user.phone = req.body.phone || user.phone
+      user.phone = req.body.phone || user.phone;
       user.email = req.body.email || user.email;
       if (req.body.password) {
         user.password = req.body.password;

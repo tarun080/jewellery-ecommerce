@@ -10,6 +10,7 @@ const Main = () => {
   const { loading, error, orders } = orderList;
   const productList = useSelector((state) => state.productList);
   const { products } = productList;
+
   return (
     <>
       <section className="content-main">
@@ -18,7 +19,7 @@ const Main = () => {
         </div>
         {/* Top Total */}
         <TopTotal orders={orders} products={products} />
-
+        <div></div>
         <div className="row">
           {/* STATICS */}
           <SaleStatistics />

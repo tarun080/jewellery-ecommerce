@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
+import axios from "axios";
+import jsonexport from "jsonexport";
 
 const TopTotal = (props) => {
   const { orders, products } = props;
@@ -8,6 +10,31 @@ const TopTotal = (props) => {
       order.isPaid === true ? (totalSale = totalSale + order.totalPrice) : null
     );
   }
+
+  const [tableData, setTableData] = useState([]);
+
+  const handleDownload = async () => {
+    try {
+      const response = await axios.get(
+        "https://charts.mongodb.com/charts-jewelry-ecommerce-urrij"
+      );
+      const csvData = await jsonexport(response.data);
+
+      const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+      const downloadLink = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = downloadLink;
+      link.setAttribute("download", "table-data.csv");
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <div className="row">
       <div className="col-lg-4">
@@ -45,6 +72,15 @@ const TopTotal = (props) => {
             <div className="text">
               <h6 className="mb-1">Total Products</h6>
               {products ? <span>{products.length}</span> : <span>0</span>}
+            </div>
+          </article>
+        </div>
+      </div>
+      <div className="col-lg-4">
+        <div className="card card-body mb-4 shadow-sm">
+          <article className="icontext">
+            <div className="text">
+              <button onClick={handleDownload}>Download Reports</button>
             </div>
           </article>
         </div>

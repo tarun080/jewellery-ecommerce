@@ -12,6 +12,24 @@ connectDatabase();
 const app = express();
 app.use(express.json());
 
+app.use(function (req, res, next, callback) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE,OPTIONS"
+  );
+  res.setHeader("Access-Control-Allow-Headers", "Authorization");
+
+  // CORS OPTIONS request, simply return 200
+  if (req.method == "OPTIONS") {
+    res.statusCode = 200;
+    res.end();
+    callback.onOptions();
+    return;
+  }
+  next();
+});
+
 // API
 app.use("/api/import", ImportData);
 app.use("/api/products", productRoute);

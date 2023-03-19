@@ -10,6 +10,8 @@ const ProfileTabs = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const toastId = React.useRef(null);
 
   const Toastobjects = {
@@ -30,19 +32,27 @@ const ProfileTabs = () => {
   useEffect(() => {
     if (user) {
       setName(user.name);
-      setPhone(user.phone)
+      setPhone(user.phone);
       setEmail(user.email);
     }
   }, [dispatch, user]);
 
   const submitHandler = (e) => {
     e.preventDefault();
-      dispatch(updateUserProfile({ id: user._id, name, email, phone }));
+    if (password !== confirmPassword) {
+      if (!toast.isActive(toastId.current)) {
+        toastId.current = toast.error("Password does not match", Toastobjects);
+      }
+    } else {
+      dispatch(
+        updateUserProfile({ id: user._id, name, phone, email, password })
+      );
       if (!toast.isActive(toastId.current)) {
         toastId.current = toast.success("Profile Updated", Toastobjects);
       }
-    
+    }
   };
+
   return (
     <>
       <Toast />
@@ -83,6 +93,28 @@ const ProfileTabs = () => {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="col-md-6">
+          <div className="form">
+            <label htmlFor="account-pass">New Password</label>
+            <input
+              className="form-control"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="col-md-6">
+          <div className="form">
+            <label htmlFor="account-confirm-pass">Confirm Password</label>
+            <input
+              className="form-control"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
             />
           </div>
         </div>
