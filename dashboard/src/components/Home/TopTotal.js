@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
-import jsonexport from "jsonexport";
+import json2csv from "json2csv";
+import { saveAs } from "file-saver";
 
 const TopTotal = (props) => {
   const { orders, products } = props;
@@ -13,26 +14,65 @@ const TopTotal = (props) => {
 
   const [tableData, setTableData] = useState([]);
 
+  const chartId = "6412e46c-058e-4c83-822d-ecc49544cf00";
+  const baseUrl = "https://charts.mongodb.com";
+
   const handleDownload = async () => {
-    try {
-      const response = await axios.get(
-        "https://charts.mongodb.com/charts-jewelry-ecommerce-urrij"
-      );
-      const csvData = await jsonexport(response.data);
+    const response = await axios.get(
+      `${baseUrl}/api/charts/versions/csv/${chartId}`
+    );
 
-      const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
-      const downloadLink = URL.createObjectURL(blob);
+    // Convert JSON data to CSV format
+    const csvData = json2csv.parse(response.data);
 
-      const link = document.createElement("a");
-      link.href = downloadLink;
-      link.setAttribute("download", "table-data.csv");
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error(error);
-    }
+    // Create a Blob object for the CSV data
+    const blob = new Blob([csvData], { type: "text/csv;charset=utf-8" });
+
+    // Save the CSV file using FileSaver.js library
+    saveAs(blob, "data.csv");
+    // try {
+    //   const response = await axios.get(
+    //     `${baseUrl}/api/charts/versions/csv/${chartId}`
+    //   );
+    //   // console.log(response.data);
+    //   // const csvData = await jsonexport(response.data);
+    //   const $ = cheerio.load(response.data);
+    //   const csvData = $("pre").text();
+    //   console.log(csvData);
+
+    //   const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+    //   const downloadLink = URL.createObjectURL(blob);
+
+    //   const link = document.createElement("a");
+    //   link.href = downloadLink;
+    //   link.setAttribute("download", "table-data.csv");
+    //   link.style.display = "none";
+    //   document.body.appendChild(link);
+    //   link.click();
+    //   document.body.removeChild(link);
+    // } catch (error) {
+    //   console.error(error);
+    // }
+    // try {
+    //   const response = await axios.get(
+    //     "https://charts.mongodb.com/charts-jewelry-ecommerce-urrij/embed/charts?id=6412e46c-058e-4c83-822d-ecc49544cf00"
+    //   );
+    //   const data = response.data;
+
+    //   stringify(data, { header: true }, (err, csvData) => {
+    //     if (err) throw err;
+
+    //     const blob = new Blob([csvData], { type: "text/csv" });
+    //     const url = URL.createObjectURL(blob);
+    //     const link = document.createElement("a");
+    //     link.href = url;
+    //     link.setAttribute("download", "data.csv");
+    //     document.body.appendChild(link);
+    //     link.click();
+    //   });
+    // } catch (error) {
+    //   console.error(error);
+    // }
   };
 
   return (

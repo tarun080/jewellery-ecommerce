@@ -444,3 +444,31 @@ const donation_report = (app, db) => {
 };
 
 export default donation_report;
+
+
+import React from 'react';
+import axios from 'axios';
+
+const DownloadButton = ({ invoiceId }) => {
+  const handleDownload = async () => {
+    try {
+      const response = await axios.get(`/invoice/${invoiceId}`, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'invoice.pdf');
+      document.body.appendChild(link);
+      link.click();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return (
+    <button onClick={handleDownload}>Download PDF</button>
+  );
+};
+
+export default DownloadButton;
