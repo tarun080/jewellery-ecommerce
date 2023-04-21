@@ -253,7 +253,6 @@ orderRouter.get("/reports/pdf", async (req, res) => {
 		if (!orders) {
 			return res.status(404).send("Invoice not found");
 		}
-		console.log(Array.isArray(orders));
 		const doc = new pdfkit();
 		doc.pipe(res);
 		doc.font("Helvetica-Bold").fontSize(24);
@@ -290,16 +289,14 @@ orderRouter.get("/reports/pdf", async (req, res) => {
 			.moveDown();
 		doc.moveDown();
 		doc.fontSize(12).text("Product Sales:", { underline: true }).moveDown();
-		console.log(Array.isArray(orders));
 		if (orders && orders.length > 0) {
 			orders.forEach((order, index) => {
+				console.log(order.orderItems);
 				doc.fontSize(12).text(`Order #${index + 1}:`);
-				order.products.forEach((product) => {
+				order.orderItems.forEach((product) => {
 					doc
 						.fontSize(10)
-						.text(
-							`- ${product.product.name} x ${product.quantity} @ ${product.product.price} USD`
-						);
+						.text(`- ${product.name} x ${product.qty} @ ${product.price} USD`);
 				});
 				doc
 					.fontSize(12)

@@ -266,26 +266,6 @@ const OrderScreen = ({ match }) => {
 										)}
 									</div>
 								)}
-								{/* {order.isPaid && (
-									<div className="col-12">
-										{loadingPay && <Loading />}
-										{!sdkReady ? (
-											<Loading />
-										) : (
-											<div className="col-lg-4">
-												<div className="card card-body mb-4 shadow-sm">
-													<article className="icontext">
-														<div className="text">
-															<button onClick={handleDownload}>
-																Download Invoice
-															</button>
-														</div>
-													</article>
-												</div>
-											</div>
-										)}
-									</div>
-								)} */}
 								{order.isPaid && (
 									<button onClick={handleDownload} disabled={isDownloading}>
 										{isDownloading ? "Downloading..." : "Download Invoice"}

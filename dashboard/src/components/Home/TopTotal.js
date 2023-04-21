@@ -10,22 +10,28 @@ const TopTotal = (props) => {
 		);
 	}
 
-	const [tableData, setTableData] = useState([]);
+	const [isDownloading, setIsDownloading] = useState(false);
 
-	const handleDownload = () => {
-		axios
-			.get("http://localhost:5000/api/orders/prod_report/pdf", {
-				responseType: "blob",
-			})
-			.then((response) => {
-				const url = window.URL.createObjectURL(new Blob([response.data]));
-				const link = document.createElement("a");
-				link.href = url;
-				link.setAttribute("download", "chart.csv");
-				document.body.appendChild(link);
-				link.click();
-				link.parentNode.removeChild(link);
-			});
+	const handleDownload = async () => {
+		try {
+			setIsDownloading(true);
+			const response = await axios.get(
+				`http://localhost:5000/api/orders/reports/pdf`,
+				{
+					responseType: "blob",
+				}
+			);
+			const url = window.URL.createObjectURL(new Blob([response.data]));
+			const link = document.createElement("a");
+			link.href = url;
+			link.setAttribute("download", "report.pdf");
+			document.body.appendChild(link);
+			link.click();
+		} catch (error) {
+			console.error(error);
+		} finally {
+			setIsDownloading(false);
+		}
 	};
 
 	return (
@@ -73,7 +79,9 @@ const TopTotal = (props) => {
 				<div className="card card-body mb-4 shadow-sm">
 					<article className="icontext">
 						<div className="text">
-							<button onClick={handleDownload}>Download Reports</button>
+							<button onClick={handleDownload} disabled={isDownloading}>
+								{isDownloading ? "Downloading..." : "Download Reports"}
+							</button>
 						</div>
 					</article>
 				</div>
