@@ -1,0 +1,156 @@
+<!-- ********** WARNING **********
+Please beware when making changes to this file, as the update may be propagated into DEV, QA or PROD without the PR being merged which
+can break Charts app in those environments. This can happen as each env shares a single copy of this file from their respective
+S3 bucket and when PR build is run e.g. from DEV env, then this change will be uploaded to DEV S3 bucket which is shared across all
+Charts App in that env.
+
+What should I be checking?
+- Making sure the change made is backwards compatible where possible, i.e. Existing Charts app should still work if this file is updated
+by copying directly to S3 bucket. 
+- Once uploadCloudBundle (in build-on-ci.js) job is completed or look for "Successfully uploaded cloud bundle" message from the CI log, do a
+smoke test in an existing cloud tenant in DEV or QA depending on which env the build was run on to make sure Charts App loads correctly. Each
+entry point should be checked e.g. Charts main App, public dashboard and Chart embedding.
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>MongoDB Charts</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <script type="text/javascript">
+      // _CHARTS_APP_CONFIG might be embedded by cloud-index-lambda
+      const cfg = (window._CHARTS_APP_CONFIG = window._CHARTS_APP_CONFIG || {});
+      document.addEventListener('DOMContentLoaded', function () {
+        const appChunk = getAppChunk();
+        if (appChunk === 'embedding') {
+          const params = new URLSearchParams(location.search);
+          const isDark = params.get('theme') === 'dark';
+          const src = `/assets/images/spinner-${isDark ? 'dark' : 'light'}.gif`;
+          document.getElementById(
+            'root'
+          ).innerHTML = `<img width="24" height="24" src="${src}" style="position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);"/>`;
+        }
+
+        Promise.resolve(cfg.bundleId ? cfg : deriveApp())
+          .then(loadBundle)
+          .catch((error) => {
+            document.body.innerText =
+              'MongoDB Charts can not be loaded, please try again later.\n\n' +
+              error;
+          });
+
+        function deriveApp() {
+          const env = location.host.substring(6, location.host.indexOf('.'));
+          return {
+            cloudBaseUrl: `https://cloud${env}.mongodb.com`,
+            stitchHttpsBaseUrl: `https://${
+              !env || env === '-stage'
+                ? `us-east-1.aws.${env ? 'staging.' : ''}data.mongodb-api`
+                : `realm${env}.mongodb`
+            }.com`,
+            stitchWebhookBaseUrl: `https://${
+              !env || env === '-stage'
+                ? `us-east-1.aws.webhooks${env ? '-staging' : ''}.mongodb-realm`
+                : `realm${env}.mongodb`
+            }.com`,
+          };
+        }
+
+        function fetchResource(url) {
+          return fetch(url).then((res) =>
+            res.ok
+              ? res.json()
+              : res.status === 404
+              ? res.status
+              : Promise.reject(res.statusText)
+          );
+        }
+
+        function loadBundle(app) {
+          Object.assign(window._CHARTS_APP_CONFIG, app);
+          const clientAppId = location.pathname.split('/')[1];
+          // redirect to /charts if clientAppId isn't included, will retrieve the correct charts app or activation page (if not activated)
+          if (!clientAppId) {
+            return location.replace(`${app.cloudBaseUrl}/charts`);
+          }
+
+          return getBundleId(app, clientAppId).then((bundleId) => {
+            if (!bundleId) {
+              return Promise.reject('Invalid clientAppId');
+            }
+            loadStyle('vendor', bundleId);
+            loadStyle(appChunk, bundleId);
+            loadScript('vendor', bundleId);
+            loadScript(appChunk, bundleId);
+          });
+        }
+
+        function buildBundle(response) {
+          const BUNDLE_PARAM = 'bundle=';
+          const bIdx = location.search.indexOf(BUNDLE_PARAM);
+          if (bIdx >= 0) {
+            const bundleId = location.search.substr(bIdx + BUNDLE_PARAM.length);
+            if (bundleId) {
+              response.bundleId = bundleId;
+            }
+          }
+          Object.assign(window._CHARTS_APP_CONFIG, response);
+          return response.bundleId;
+        }
+
+        function getBundleId(app, clientAppId) {
+          const endpoint = `${app.stitchHttpsBaseUrl}/app/${clientAppId}/endpoint`;
+          return (cfg.bundleId
+            ? Promise.resolve(cfg)
+            : fetchResource(`${endpoint}/bundle_settings`)
+          ).then((response) => {
+            if (response !== 404) {
+              return buildBundle(response);
+            } else {
+              const oldWebhook = `${app.stitchWebhookBaseUrl}/api/client/v2.0/app/${clientAppId}/service/http/incoming_webhook`;
+              return fetchResource(`${oldWebhook}/bundle-settings`).then(
+                (webhookResponse) => {
+                  if (webhookResponse === 404) {
+                    return Promise.reject(webhookResponse);
+                  }
+                  return buildBundle(webhookResponse);
+                }
+              );
+            }
+          });
+        }
+
+        function getAppChunk() {
+          const isEmbedding = /^\/[^\/.]+\/embed\/charts$/;
+          const isEmbedDashboard = /^\/[^\/.]+\/embed\/dashboards$/;
+          const isPublicDashboard = /^\/[^\/.]+\/public\/dashboards/;
+          if (isEmbedding.test(location.pathname)) return 'embedding';
+          if (isEmbedDashboard.test(location.pathname))
+            return 'dashboard-shared';
+          if (isPublicDashboard.test(location.pathname))
+            return 'dashboard-shared';
+          return 'index';
+        }
+
+        function loadStyle(css, version) {
+          const link = document.createElement('link');
+          link.setAttribute('rel', 'stylesheet');
+          link.type = 'text/css';
+          link.href = `/bundles/${version}/${css}.css`;
+          document.head.appendChild(link);
+        }
+
+        function loadScript(js, version) {
+          const script = document.createElement('script');
+          script.src = `/bundles/${version}/${js}.js`;
+          script.defer = true;
+          document.head.appendChild(script);
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

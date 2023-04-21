@@ -133,11 +133,10 @@ orderRouter.put(
 
 orderRouter.get("/invoices/:id/pdf", async (req, res) => {
 	try {
-		const invoice = await Order.findById(req.params.id);
+		const invoice = await Order.findById(req.params.id).populate("user");
 		if (!invoice) {
 			return res.status(404).send("Invoice not found");
 		}
-		console.log(invoice.paidAt);
 
 		const doc = new pdfkit();
 		doc.pipe(res);
@@ -161,6 +160,10 @@ orderRouter.get("/invoices/:id/pdf", async (req, res) => {
 			.text("Invoice", { align: "center" });
 		doc.moveDown();
 		doc.font("Helvetica").fontSize(12).text(`Invoice Number: ${invoice._id}`);
+		doc
+			.font("Helvetica")
+			.fontSize(12)
+			.text(`Customer Name: ${invoice.user.name}`);
 		doc.font("Helvetica").fontSize(12).text(`Date: ${invoice.paidAt}`);
 		doc.moveDown();
 		doc.font("Helvetica-Bold").fontSize(16).text("Items", { underline: true });
@@ -186,52 +189,132 @@ orderRouter.get("/invoices/:id/pdf", async (req, res) => {
 	}
 });
 
-orderRouter.get(
-	"/invoices/:id/pdf",
-	protect,
-	asyncHandler(async (req, res) => {
-		try {
-			const invoice = await Order.findById(req.params.id);
-			if (!invoice) {
-				return res.status(404).send("Invoice not found");
-			}
-
-			const doc = new pdfkit();
-			doc.pipe(res);
-
-			doc
-				.font("Helvetica-Bold")
-				.fontSize(24)
-				.text("Invoice", { align: "center" });
-			doc.moveDown();
-			doc.font("Helvetica").fontSize(12).text(`Invoice Number: ${invoice._id}`);
-			doc.font("Helvetica").fontSize(12).text(`Date: ${invoice.date}`);
-			doc.moveDown();
-			doc
-				.font("Helvetica-Bold")
-				.fontSize(16)
-				.text("Items", { underline: true });
-			doc.moveDown();
-			invoice.orderItems.forEach((item) => {
-				doc.font("Helvetica").fontSize(12).text(item.name);
-				doc
-					.font("Helvetica-Bold")
-					.fontSize(12)
-					.text(`$${item.price.toFixed(2)}`, { align: "right" });
-				doc.moveDown();
-			});
-			doc.moveDown();
-			doc
-				.font("Helvetica-Bold")
-				.fontSize(16)
-				.text(`Total: $${invoice.totalPrice.toFixed(2)}`, { align: "right" });
-
-			doc.end();
-		} catch (error) {
-			console.error(error);
-			res.status(500).send("Internal server error");
+orderRouter.get("/invoices/:id/pdf", async (req, res) => {
+	try {
+		const invoice = await Order.findById(req.params.id).populate("user");
+		if (!invoice) {
+			return res.status(404).send("Invoice not found");
 		}
-	})
-);
+
+		const doc = new pdfkit();
+		doc.pipe(res);
+		doc.font("Helvetica-Bold").fontSize(24);
+		doc
+			.image(
+				"F:\\Radhe Jewellers\\website\\client frontend\\public\\images\\logo.png",
+				{
+					fit: [100, 100],
+					align: "left",
+					valign: "center",
+				}
+			)
+			.text("Radhe Jewellers", {
+				align: "center",
+			});
+		doc.moveDown();
+		doc
+			.font("Helvetica-Bold")
+			.fontSize(24)
+			.text("Invoice", { align: "center" });
+		doc.moveDown();
+		doc.font("Helvetica").fontSize(12).text(`Invoice Number: ${invoice._id}`);
+		doc
+			.font("Helvetica")
+			.fontSize(12)
+			.text(`Customer Name: ${invoice.user.name}`);
+		doc.font("Helvetica").fontSize(12).text(`Date: ${invoice.paidAt}`);
+		doc.moveDown();
+		doc.font("Helvetica-Bold").fontSize(16).text("Items", { underline: true });
+		doc.moveDown();
+		invoice.orderItems.forEach((item) => {
+			doc.font("Helvetica").fontSize(12).text(item.name);
+			doc
+				.font("Helvetica-Bold")
+				.fontSize(12)
+				.text(`$${item.price.toFixed(2)}`, { align: "right" });
+			doc.moveDown();
+		});
+		doc.moveDown();
+		doc
+			.font("Helvetica-Bold")
+			.fontSize(16)
+			.text(`Total: $${invoice.totalPrice.toFixed(2)}`, { align: "right" });
+
+		doc.end();
+	} catch (error) {
+		console.error(error);
+		res.status(500).send("Internal server error");
+	}
+});
+
+orderRouter.get("/reports/pdf", async (req, res) => {
+	try {
+		const orders = await Order.find();
+		if (!orders) {
+			return res.status(404).send("Invoice not found");
+		}
+		console.log(Array.isArray(orders));
+		const doc = new pdfkit();
+		doc.pipe(res);
+		doc.font("Helvetica-Bold").fontSize(24);
+		doc
+			.image(
+				"F:\\Radhe Jewellers\\website\\client frontend\\public\\images\\logo.png",
+				{
+					fit: [100, 100],
+					align: "left",
+					valign: "center",
+				}
+			)
+			.text("Radhe Jewellers", {
+				align: "center",
+			});
+		doc.moveDown();
+		doc
+			.fontSize(14)
+			.text("Product Sales Report", { align: "center" })
+			.moveDown();
+		doc
+			.fontSize(12)
+			.text(`Generated on ${new Date().toLocaleString()}`)
+			.moveDown();
+		doc.fontSize(12).text(`Total Orders: ${orders.length}`).moveDown();
+		doc
+			.fontSize(12)
+			.text(
+				`Total Revenue: ${orders.reduce(
+					(sum, order) => sum + order.totalPrice,
+					0
+				)} USD`
+			)
+			.moveDown();
+		doc.moveDown();
+		doc.fontSize(12).text("Product Sales:", { underline: true }).moveDown();
+		console.log(Array.isArray(orders));
+		if (orders && orders.length > 0) {
+			orders.forEach((order, index) => {
+				doc.fontSize(12).text(`Order #${index + 1}:`);
+				order.products.forEach((product) => {
+					doc
+						.fontSize(10)
+						.text(
+							`- ${product.product.name} x ${product.quantity} @ ${product.product.price} USD`
+						);
+				});
+				doc
+					.fontSize(12)
+					.text(`Order Total: ${order.totalPrice} USD`)
+					.moveDown();
+			});
+		} else {
+			console.log("orders is empty");
+		}
+		console.log(doc);
+		doc.end();
+	} catch (error) {
+		console.error(error);
+		res.status(500).send("Internal server error");
+	}
+});
 
 export default orderRouter;
