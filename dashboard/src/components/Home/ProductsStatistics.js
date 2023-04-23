@@ -1,27 +1,27 @@
 import React from "react";
 
 const ProductsStatistics = () => {
-  return (
-    <div className="col-xl-6 col-lg-12">
-      <div className="card mb-4 shadow-sm">
-        <article className="card-body">
-          <h5 className="card-title">Products statistics</h5>
-          <iframe
-            title="iframe1"
-            style={{
-              background: "#FFFFFF",
-              border: "none",
-              borderRadius: "2px",
-              boxShadow: "0 2px 10px 0 rgba(70, 76, 79, .2)",
-              width: "100%",
-              height: "350px",
-            }}
-            src="https://charts.mongodb.com/charts-jewelry-ecommerce-urrij/embed/charts?id=6409bac1-9d2d-463a-8787-02e6c3192e5d&maxDataAge=3600&theme=light&autoRefresh=true"
-          ></iframe>
-        </article>
-      </div>
-    </div>
-  );
+	return (
+		<div className="col-xl-6 col-lg-12">
+			<div className="card mb-4 shadow-sm">
+				<article className="card-body">
+					<h5 className="card-title">Products statistics</h5>
+					<iframe
+						title="iframe1"
+						style={{
+							background: "#FFFFFF",
+							border: "none",
+							borderRadius: "2px",
+							boxShadow: "0 2px 10px 0 rgba(70, 76, 79, .2)",
+							width: "100%",
+							height: "350px",
+						}}
+						src="https://charts.mongodb.com/charts-jewelry-ecommerce-urrij/embed/charts?id=6412e46c-058e-4c83-822d-ecc49544cf00&maxDataAge=300&theme=light&autoRefresh=true"
+					></iframe>
+				</article>
+			</div>
+		</div>
+	);
 };
 
 export default ProductsStatistics;
